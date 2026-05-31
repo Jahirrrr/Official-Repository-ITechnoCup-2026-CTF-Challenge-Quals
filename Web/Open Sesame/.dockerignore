@@ -1,0 +1,8 @@
+.git
+.agents
+.codex
+CVE-2023-4966/.git
+solution
+README.md
+*.pyc
+__pycache__/

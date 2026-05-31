@@ -1,0 +1,8 @@
+services:
+  open-sesame:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      FLAG: "ITECHNO26{opeeeeeen_plssssss_opennnnnn_ses4meeeeeee}"
+    restart: unless-stopped

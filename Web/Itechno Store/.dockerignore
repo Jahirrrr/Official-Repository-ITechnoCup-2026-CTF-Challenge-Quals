@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.git/
+.agents/
+.codex/
+CVE-2026-41940/.git/
+solve/
+writeup/

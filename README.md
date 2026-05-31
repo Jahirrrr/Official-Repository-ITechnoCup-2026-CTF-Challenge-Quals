@@ -1,0 +1,3 @@
+# Official Repository ITechnoCup 2026 CTF Challenge Quals
+
+ITechnoCup 2026 adalah kompetisi teknologi yang diprakarsai mahasiswa untuk menghubungkan dan memberdayakan generasi inovator digital. Lebih dari sekadar lomba, ITechno menjadi wadah eksplorasi, kolaborasi, dan pengembangan diri di bidang teknologi seperti software, desain, dan data. Dengan fokus pada inovasi dan keterampilan, kami menyiapkan talenta muda untuk tantangan dunia digital dan masa depan Smart Nation.

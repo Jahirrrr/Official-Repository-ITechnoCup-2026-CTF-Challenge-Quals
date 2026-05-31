@@ -1,0 +1,449 @@
+{ MEM_STATUS          0x0000 }
+{ MEM_REC12           0x0008 }
+{ MEM_OWNER           0x0010 }
+{ MEM_ARCHIVE         0x0018 }
+{ MEM_BASE            0x0020 }
+{ MEM_LAST            0x0028 }
+{ MEM_RESTART         0x0030 }
+{ MEM_NONCE           0x0038 }
+{ MEM_PROOF           0x0040 }
+{ MEM_DISTANCE        0x0048 }
+{ MEM_REGION_HASH     0x0050 }
+{ MEM_PASSBUF         0x0060 }
+{ MEM_PASSSEED        0x0080 }
+{ MEM_FLAG            0x0100 }
+
+{ CONST_ARCH_XOR      0x0f1e2d3c4b5a6978 }
+{ CONST_ARCH_POST     0x6a09e667f3bcc909 }
+{ CONST_BASE_POST     0x94d049bb133111eb }
+{ CONST_LAST_ADD      0x9e3779b97f4a7c15 }
+{ CONST_LAST_POST     0xd1b54a32d192ed03 }
+{ CONST_RESTART_POST  0x8c6f736b8ddf1234 }
+{ CONST_STAGE1_POST   0x53eed1f0cafe4242 }
+{ CONST_STAGE2_ADD    0x7f4a7c159e3779b9 }
+{ CONST_STAGE2_XOR    0x13579bdf2468ace0 }
+{ CONST_FLAG_SEED_XOR 0x434c46532d627274 }
+{ CONST_MIX_MUL1      0xbf58476d1ce4e5b9 }
+{ CONST_MIX_MUL2      0x94d049bb133111eb }
+{ CONST_FOLD_MUL      0x45d9f3b }
+{ CONST_FLAG_ADD      0x9e3779b97f4a7c15 }
+{ CONST_TARGET32      0x36ee86b0 }
+{ CONST_EXTRA16       0x5af9 }
+{ CONST_FLAG_LEN      59 }
+
+# forceXor = True
+
+<FUN_Rol64>
+    GET R0, 1
+    GET R1, 2
+    AND R1, 0x3f
+    CMP R1, 0
+    JMPC <LAB_Rol64_Done>, EQ
+    MOV R2, R0
+    SHL R0, R1
+    MOV R3, 0x40
+    SUB R3, R1
+    SHR R2, R3
+    OR R0, R2
+    <LAB_Rol64_Done>
+    RET R0
+
+<FUN_Mix64>
+    GET R0, 1
+    MOV R1, R0
+    SHR R1, 30
+    XOR R0, R1
+    MUL R0, CONST_MIX_MUL1
+    MOV R1, R0
+    SHR R1, 27
+    XOR R0, R1
+    MUL R0, CONST_MIX_MUL2
+    MOV R1, R0
+    SHR R1, 31
+    XOR R0, R1
+    RET R0
+
+<FUN_Fold32>
+    GET R0, 1
+    AND R0, 0xffffffff
+    MOV R1, R0
+    SHR R1, 13
+    XOR R0, R1
+    AND R0, 0xffffffff
+    MUL R0, CONST_FOLD_MUL
+    AND R0, 0xffffffff
+    MOV R1, R0
+    SHR R1, 16
+    XOR R0, R1
+    AND R0, 0xffffffff
+    RET R0
+
+<FUN_PrintPrompt>
+    GET R4, 1
+
+    <LAB_PrintPrompt_Loop>
+        MOV R0, R4
+        AND R0, 0xff
+        MOV R1, R0
+        AND R0, 0x0f
+        AND R1, 0xf0
+        SHL R0, 4
+        SHR R1, 4
+        OR R0, R1
+        PRINT R0
+
+        SHR R4, 8
+        CMP R4, 0
+        JMPC <LAB_PrintPrompt_Loop>, NEQ
+
+    RET 0
+
+<FUN_PrintReject>
+    GET R0, 1
+    MOV R2, 0
+    MOV R3, 0
+
+    <LAB_PrintReject_XorLoop>
+        MOV R1, R0
+        AND R1, 0xff
+        XOR R1, 0x38
+        SHL R2, 8
+        OR R2, R1
+        SHR R0, 8
+        CMP R0, 0
+        JMPC <LAB_PrintReject_XorLoop>, NEQ
+    PRINT R2
+    RET 0
+
+<FUN_ShuffleInput>
+    GET R0, 1
+    AND R0, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+    MOV P0, 0xa8769f686ab4449a2eace1dc0ca25d64264b530fb3fa93973c320d902befa31c
+    SHL P0, 256
+    OR  P0, 0x62571fd0d2a65d830a2381a1160d63dca1478f43fc298439537986bffc0220d3
+    SHL P0, 256
+    OR  P0, 0x3b68ad52e8ecdd7f935b4035aa0772bd4463218bb499a4e338f9de155354bb02
+    SHL P0, 256
+    OR  P0, 0xd73b9b3bbdcee2d16062b6fba6a54867493a55bb7cf48f82b688ff264280012a
+    SHL P0, 256
+    OR  P0, 0x7cca37ab3d1e8a575fb89628e5e7cd6becc4dfb5529b8a5b2250d2063c6e5f80
+    SHL P0, 256
+    OR  P0, 0x8da3c8b386b2e2ad2908bb11d70dede5e34fe74a2569de6841204b3ec2a06c06
+    SHL P0, 256
+    OR  P0, 0x9f0d7d09e533c588052e166d5548e8dd1063603b3cd42c503f8c56c0ca6d57fa
+    SHL P0, 256
+    OR  P0, 0xefb3d6c0556038ef1224b9809650c80718459e3f61f006ffec3dee234a85012d
+
+    MOV C0, 0
+    MOV P1, 0x80000000000000000000000000000000000000000000000000000000000000
+
+    <LAB_ShuffleInput_RoundLoop>
+        MOV R1, P0
+        AND R1, 0xff
+        MOV R2, R1
+        MOV C1, 0
+        <LAB_ShuffleInput_BuildXor>
+            SHL R2, 8
+            OR R2, R1
+            ADD C1, 1
+            CMP C1, 19
+            JMPC <LAB_ShuffleInput_BuildXor>, LT
+        MOV R1, R2
+
+        XOR R0, R1
+
+        MOV R1, R0
+        SHR R0, 1
+        AND R1, 1
+        CMP R1, 1
+        JMPC <LAB_ShuffleInput_RotationDone>, NEQ
+            OR R0, P1
+        <LAB_ShuffleInput_RotationDone>
+
+        SHR P0, 8
+
+        ADD C0, 1
+        CMP C0, 0xff
+        JMPC <LAB_ShuffleInput_RoundLoop>, LTE
+
+    RET R0
+
+<FUN_DerivePassSeed>
+    MOV P0, [MEM_PASSBUF]
+
+    MOV R0, [0x0068]
+    CALL <FUN_Rol64>, R0, 7
+    XOR R0, P0
+    MOV P0, R0
+
+    MOV R0, [0x0070]
+    CALL <FUN_Rol64>, R0, 13
+    XOR R0, P0
+    MOV P0, R0
+
+    MOV R0, [0x0078]
+    CALL <FUN_Rol64>, R0, 29
+    XOR R0, P0
+    XOR R0, 0x49544543482d564d
+    CALL <FUN_Mix64>, R0
+    MOV [MEM_PASSSEED], R0
+    RET R0
+
+<FUN_InitData>
+    MOV [MEM_FLAG], 0xa89a1a29822fc942
+    MOV [0x0108], 0xb7c5071147458574
+    MOV [0x0110], 0xf0dc6ea64df32dbb
+    MOV [0x0118], 0xe29b946030961e5f
+    MOV [0x0120], 0xaf766b6261be3bfd
+    MOV [0x0128], 0x1b498e2f5bb887cd
+    MOV [0x0130], 0xeb03731203c62a5f
+    MOV [0x0138], 0x00000000000c4a3f
+    RET 0
+
+<FUN_ValidateStage1>
+    MOV R7, [MEM_STATUS]
+    CMP R7, 1
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R7, [MEM_DISTANCE]
+    CMP R7, 0x30
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R7, [MEM_REC12]
+    CMP R7, 0x369
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R0, [MEM_OWNER]
+    MOV R1, R0
+    AND R1, 0xffff
+    SUB R1, 1
+    AND R1, 0xffff
+    SHL R1, 8
+    MOV R2, R0
+    SHR R2, 16
+    AND R2, 0xffff
+    SUB R2, 0xff
+    AND R2, 0xffff
+    SHL R2, 16
+    MOV R3, R0
+    SHR R3, 32
+    SHL R3, 32
+    OR R3, R2
+    OR R3, R1
+    CMP R3, 0xffffffff00000000
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R0, [MEM_OWNER]
+    XOR R0, CONST_ARCH_XOR
+    MOV R1, [MEM_REC12]
+    XOR R1, [MEM_DISTANCE]
+    AND R1, 31
+    CALL <FUN_Rol64>, R0, R1
+    XOR R0, CONST_ARCH_POST
+    CMP [MEM_ARCHIVE], R0
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R0, [MEM_OWNER]
+    ADD R0, [MEM_ARCHIVE]
+    ADD R0, [MEM_REGION_HASH]
+    ADD R0, [MEM_REC12]
+    CALL <FUN_Mix64>, R0
+    XOR R0, CONST_BASE_POST
+    CMP [MEM_BASE], R0
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R0, [MEM_BASE]
+    XOR R0, [MEM_REGION_HASH]
+    ADD R0, CONST_LAST_ADD
+    CALL <FUN_Rol64>, R0, 17
+    XOR R0, CONST_LAST_POST
+    CMP [MEM_LAST], R0
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R0, [MEM_OWNER]
+    XOR R0, [MEM_ARCHIVE]
+    ADD R0, [MEM_LAST]
+    ADD R0, [MEM_REGION_HASH]
+    CALL <FUN_Mix64>, R0
+    XOR R0, CONST_RESTART_POST
+    CMP [MEM_RESTART], R0
+    JMPC <LAB_ValidateStage1_Fail>, NEQ
+
+    MOV R0, [MEM_OWNER]
+    XOR R0, [MEM_ARCHIVE]
+    ADD R0, [MEM_BASE]
+    XOR R0, [MEM_LAST]
+    ADD R0, [MEM_RESTART]
+    XOR R0, [MEM_REGION_HASH]
+    XOR R0, CONST_STAGE1_POST
+    CALL <FUN_Mix64>, R0
+    XOR R0, [MEM_PASSSEED]
+    CALL <FUN_Mix64>, R0
+    RET R0
+
+    <LAB_ValidateStage1_Fail>
+    RET 0
+
+<FUN_ValidateStage2>
+    GET P0, 1
+
+    MOV R0, [MEM_NONCE]
+    MOV R1, R0
+    AND R1, 0xffffffffc0000000
+    CMP R1, 0
+    JMPC <LAB_ValidateStage2_Fail>, NEQ
+
+    MOV R0, P0
+    MOV R1, [MEM_NONCE]
+    MUL R1, 0x10001
+    XOR R0, R1
+    ADD R0, CONST_STAGE2_ADD
+    CALL <FUN_Mix64>, R0
+
+    MOV R1, [MEM_NONCE]
+    AND R1, 31
+    CALL <FUN_Rol64>, R0, R1
+
+    XOR R0, [MEM_OWNER]
+    ADD R0, [MEM_ARCHIVE]
+    CALL <FUN_Mix64>, R0
+    XOR R0, [MEM_BASE]
+    ADD R0, [MEM_LAST]
+    ADD R0, [MEM_RESTART]
+    CALL <FUN_Mix64>, R0
+
+    MOV R1, [MEM_NONCE]
+    MUL R1, 0x1f123bb5
+    XOR R0, R1
+    ADD R0, [MEM_REGION_HASH]
+    CALL <FUN_Mix64>, R0
+    XOR R0, CONST_STAGE2_XOR
+    XOR R0, [MEM_PASSSEED]
+    CMP [MEM_PROOF], R0
+    JMPC <LAB_ValidateStage2_Fail>, NEQ
+    MOV P1, R0
+
+    MOV R1, R0
+    SHR R1, 32
+    XOR R1, P1
+    XOR R1, [MEM_NONCE]
+    CALL <FUN_Fold32>, R1
+    CMP R0, CONST_TARGET32
+    JMPC <LAB_ValidateStage2_Fail>, NEQ
+
+    MOV R0, P1
+    SHR R0, 8
+    XOR R0, P0
+    CALL <FUN_Mix64>, R0
+    AND R0, 0xffff
+    CMP R0, CONST_EXTRA16
+    JMPC <LAB_ValidateStage2_Fail>, NEQ
+
+    RET P1
+
+    <LAB_ValidateStage2_Fail>
+    RET 0
+
+<FUN_PrintFlag>
+    GET P0, 1
+    GET P1, 2
+
+    MOV R0, [MEM_NONCE]
+    AND R0, 0x3fffffff
+    SHL R0, 16
+    XOR R0, P0
+    XOR R0, P1
+    XOR R0, [MEM_REGION_HASH]
+    MOV R1, [MEM_REC12]
+    SHL R1, 32
+    XOR R0, R1
+    XOR R0, CONST_FLAG_SEED_XOR
+    XOR R0, [MEM_PASSSEED]
+    CALL <FUN_Mix64>, R0
+    MOV P2, R0
+
+    MOV C0, 0
+    <LAB_PrintFlag_Loop>
+        MOV R0, C0
+        ADD R0, 1
+        MUL R0, CONST_FLAG_ADD
+        ADD R0, P2
+        CALL <FUN_Mix64>, R0
+        MOV P2, R0
+
+        MOV R1, R0
+        AND R1, 0xff
+        MOV R2, R0
+        SHR R2, 21
+        AND R2, 0xff
+        XOR R1, R2
+        MOV R2, R0
+        SHR R2, 44
+        AND R2, 0xff
+        XOR R1, R2
+        MOV R2, C0
+        MUL R2, 13
+        ADD R2, 5
+        AND R2, 0xff
+        XOR R1, R2
+        AND R1, 0xff
+
+        MOV R3, MEM_FLAG
+        ADD R3, C0
+        MOV R4, [R3]
+        AND R4, 0xff
+        XOR R4, R1
+        AND R4, 0xff
+        PRINT R4
+
+        ADD C0, 1
+        CMP C0, CONST_FLAG_LEN
+        JMPC <LAB_PrintFlag_Loop>, LT
+
+    PRINT 0x0a
+    RET 0
+
+<FUN_PrintFail>
+    PRINT 0x007265766f636572
+    PRINT 0x0000000a656c6261
+    RET 0
+
+<FUN_main>
+    MODE 1
+    CALL <FUN_PrintPrompt>, 0x2a35657e69647e6f63602f647024627f67737371607022757f69702275647e6560256371656c605
+    MODE 0
+    SLEEP 0, 500000000
+    MODE 1
+
+    MOV P0, R0
+    CALL <FUN_ShuffleInput>, R0
+    CMP R0, 0x0868986abc943c122443057aec6844318694b2366faabbe1981d4b3ea54108
+    JMPC <LAB_Main_OuterFail>, NEQ
+
+    MOV [MEM_PASSBUF], P0
+    MODE 0
+    CALL <FUN_DerivePassSeed>
+
+    CALL <FUN_InitData>
+    CALL <FUN_ValidateStage1>
+    CMP R0, 0
+    JMPC <LAB_Main_BlfFail>, EQ
+
+    MOV P3, R0
+    CALL <FUN_ValidateStage2>, P3
+    CMP R0, 0
+    JMPC <LAB_Main_BlfFail>, EQ
+
+    CALL <FUN_PrintFlag>, P3, R0
+    EXIT 0
+
+    <LAB_Main_OuterFail>
+    MODE 93
+    CALL <FUN_PrintReject>, 0x32322363095523630b0955637d6a6a776a6523630855186f5d18594a5d1850594e51565f184c4a574d5a545d184a
+    CALL <FUN_PrintReject>, 0x5d595c51565f1841574d4a185156484d4c16187e574a1855574a5d1851565e574a55594c5157561418545757534d48181a4b5351545418514b4b4d5d1a32
+    EXIT 1
+
+    <LAB_Main_BlfFail>
+    CALL <FUN_PrintFail>
+    EXIT 1
